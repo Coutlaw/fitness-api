@@ -25,16 +25,15 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 		}
 
 		sessionToken, err := r.Cookie("session_token")
-		fmt.Println("session expiration: ", sessionToken)
-		if err != nil {
-			http.Error(w, "unable to find session token in cookies, please log in again", http.StatusForbidden)
+
+		if err != nil ||  time.Now().Unix() < sessionToken.Expires.Unix() {
+			http.Error(w, "invalid or expired session_token, please log in again", http.StatusForbidden)
 			return
 		}
+
+		// TODO remove this later
 		fmt.Println("session expiration: ", sessionToken.Expires.Unix())
-		if time.Now().Unix() < sessionToken.Expires.Unix() {
-			http.Error(w, "session is expired, pleas log in again", http.StatusForbidden)
-			return
-		}
+		fmt.Println("session expiration: ", sessionToken)
 
 		tk := &Token{}
 		// search for the token in the DB
