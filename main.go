@@ -2,20 +2,14 @@ package main
 
 import (
 	"fitness-api/controllers"
+	"fitness-api/models"
 	"fmt"
-	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 )
 
-// Package level redis cache
-var cache redis.Conn
-
 func main() {
-	// Redis all the things
-	initCache()
-
 	router := mux.NewRouter()
 
 	// ROUTES
@@ -41,7 +35,7 @@ func main() {
 	// Delete a contact by ID that belongs to a User
 	router.HandleFunc("/api/users/contacts/{contactId}", controllers.DeleteContactById).Methods("DELETE")
 
-	//router.NotFoundHandler = app.NotFoundHandler
+	router.Use(models.SessionAuthentication) //attach JWT auth middleware
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -54,14 +48,4 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
-}
-
-func initCache() {
-	// Initialize the redis connection to a redis instance running on your local machine
-	conn, err := redis.DialURL("redis://localhost")
-	if err != nil {
-		panic(err)
-	}
-	// Assign the connection to the package level `cache` variable
-	cache = conn
 }

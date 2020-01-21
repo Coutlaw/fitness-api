@@ -1,10 +1,10 @@
 version: '3'
 services:
   app:
-    container_name: full_app
+    container_name: fitness_app
     build: ../fitness-api
     ports: 
-      - 8080:8080 
+      - 8000:8000
     restart: on-failure
     volumes:
       - api:/usr/src/app/
@@ -16,12 +16,12 @@ services:
 
   fullstack-postgres:
     image: postgres:latest
-    container_name: full_db_postgres
+    container_name: fitness_db_postgres
     environment:
-      - POSTGRES_USER=${DB_USER}  
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-      - DATABASE_HOST=${DB_HOST} 
+      - POSTGRES_USER=${TEST_DB_USER}
+      - POSTGRES_PASSWORD=${TEST_DB_PASSWORD}
+      - POSTGRES_DB=${TEST_DB_NAME}
+      - DATABASE_HOST=${TEST_DB_HOST}
     ports:
       - '5432:5432'
     volumes:
