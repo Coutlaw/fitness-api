@@ -22,8 +22,8 @@ type User struct {
 // `Token` belongs to `User`, `UserID` is the foreign key
 type Token struct {
 	gorm.Model
-	UserId uint
 	User User
+	UserId uint
 	SessionTK string
 }
 

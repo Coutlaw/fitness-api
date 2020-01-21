@@ -11,7 +11,7 @@ import (
 
 var CreateContact = func(w http.ResponseWriter, r *http.Request) {
 
-	user := r.Context().Value("user").(uint) //Grab the id of the user that send the request
+	tkRole := r.Context().Value("TkRole").(models.TkRole) //Grab the id of the user that send the request
 	contact := &models.Contact{}
 
 	err := json.NewDecoder(r.Body).Decode(contact)
@@ -20,7 +20,14 @@ var CreateContact = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contact.UserId = user
+	contact.UserId = tkRole.UserId
+
+	// Only admins can create things
+	if tkRole.Role != "admin"{
+		http.Error(w, "Only admins can create contacts", http.StatusUnauthorized)
+		return
+	}
+
 	resp := contact.Create()
 	if resp["success"].(bool) != true {
 		http.Error(w, resp["message"].(string), http.StatusBadRequest)
@@ -31,8 +38,8 @@ var CreateContact = func(w http.ResponseWriter, r *http.Request) {
 
 var GetContacts = func(w http.ResponseWriter, r *http.Request) {
 
-	userId := r.Context().Value("user").(uint)
-	data := models.GetContacts(userId)
+	tkRole := r.Context().Value("TkRole").(models.TkRole)
+	data := models.GetContacts(tkRole.UserId)
 	resp := u.Message(true, "success")
 	resp["data"] = data
 	u.Respond(w, resp)
@@ -52,9 +59,9 @@ var GetContactById = func(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// pull User Id from context
-	userId := r.Context().Value("user").(uint)
+	tkRole := r.Context().Value("TkRole").(models.TkRole)
 
-	data := models.GetContact(uint(contactId), userId)
+	data := models.GetContact(uint(contactId), tkRole.UserId)
 	resp := u.Message(true, "success")
 	resp["data"] = data
 	u.Respond(w, resp)
@@ -74,17 +81,17 @@ var DeleteContactById = func(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// pull User Id from context
-	userId := r.Context().Value("user").(uint)
+	tkRole := r.Context().Value("TkRole").(models.TkRole)
 
-	_ = models.DeleteContact(uint(contactId), userId)
+	_ = models.DeleteContact(uint(contactId), tkRole.UserId)
 	resp := u.Message(true, "success")
 	u.Respond(w, resp)
 }
 
 var DeleteContacts = func(w http.ResponseWriter, r *http.Request) {
 
-	userId := r.Context().Value("user").(uint)
-	_ = models.DeleteContacts(userId)
+	tkRole := r.Context().Value("TkRole").(models.TkRole)
+	_ = models.DeleteContacts(tkRole.UserId)
 	resp := u.Message(true, "success")
 	u.Respond(w, resp)
 }
