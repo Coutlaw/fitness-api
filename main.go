@@ -20,20 +20,17 @@ func main() {
 	// Get a new JWT if users is expired
 	router.HandleFunc("/api/users/login", controllers.Authenticate).Methods("POST")
 
-	// Create contacts for a user
-	router.HandleFunc("/api/users/contacts", controllers.CreateContact).Methods("POST")
+	// Create a workout (admins only)
+	router.HandleFunc("/api/contacts", controllers.CreateWorkout).Methods("POST")
 
-	// Get all contacts for a user
-	router.HandleFunc("/api/users/contacts", controllers.GetContacts).Methods("GET")
+	// Get all Workouts
+	router.HandleFunc("/api/contacts", controllers.GetWorkouts).Methods("GET")
 
-	// Delete all contacts for a user
-	router.HandleFunc("/api/users/contacts", controllers.DeleteContacts).Methods("DELETE")
+	// Get a workout by workoutId
+	router.HandleFunc("/api/contacts/{workoutId}", controllers.GetWorkoutById).Methods("GET")
 
-	// Get a contact by ID that belongs to a User
-	router.HandleFunc("/api/users/contacts/{contactId}", controllers.GetContactById).Methods("GET")
-
-	// Delete a contact by ID that belongs to a User
-	router.HandleFunc("/api/users/contacts/{contactId}", controllers.DeleteContactById).Methods("DELETE")
+	// Delete a workout by workoutId
+	router.HandleFunc("/api/contacts/{workoutId}", controllers.DeleteWorkoutById).Methods("DELETE")
 
 	router.Use(models.SessionAuthentication) //attach JWT auth middleware
 

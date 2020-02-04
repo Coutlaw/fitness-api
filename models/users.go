@@ -17,6 +17,7 @@ type User struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
+	Workout  uint   `json:"workout_id"`
 }
 
 // `Token` belongs to `User`, `UserID` is the foreign key
@@ -63,6 +64,9 @@ func (user *User) Create() (map[string]interface{}, string) {
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	user.Password = string(hashedPassword)
+
+	//// Prevent anyone but users from being created
+	//user.Role = "user"
 
 	GetDB().Create(user)
 
