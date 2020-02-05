@@ -38,7 +38,7 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 
 		// TODO remove this later
 		fmt.Println("session expiration: ", sessionToken.Expires.Unix())
-		fmt.Println("session expiration: ", sessionToken)
+		fmt.Println("session token: ", sessionToken)
 
 		tk := &TkRole{}
 		// search for the token in the DB

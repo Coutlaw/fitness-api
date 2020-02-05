@@ -56,10 +56,7 @@ var GetWorkoutById = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// pull User Id from context
-	tkRole := r.Context().Value("TkRole").(models.TkRole)
-
-	data := models.GetWorkoutById(uint(workoutId), tkRole.UserId)
+	data := models.GetWorkoutById(uint(workoutId))
 	resp := u.Message(true, "success")
 	resp["data"] = data
 	u.Respond(w, resp)

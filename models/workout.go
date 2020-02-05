@@ -61,37 +61,27 @@ func (workout *Workout) Create() map[string]interface{} {
 	return resp
 }
 
-func GetWorkoutById(workoutId uint, userId uint) *Workout {
+func GetWorkoutById(workoutId uint) *Workout {
 
 	workout := &Workout{}
-	err := GetDB().Table("workouts").Where("user_id = ?", userId).Where("id = ?", workoutId).First(workout).Error
+	err := GetDB().Table("workouts").Where("id = ?", workoutId).First(workout).Error
 	if err != nil {
 		return nil
 	}
 	return workout
 }
 
-func DeleteWorkoutById(workoutId uint, userId uint) *Workout {
+func DeleteWorkoutById(workoutId uint) *Workout {
 
 	workout := &Workout{}
-	err := GetDB().Table("workouts").Where("user_id = ?", userId).Where("id = ?", workout).Delete(workout).Error
+	err := GetDB().Table("workouts").Where("id = ?", workoutId).Delete(workout).Error
 	if err != nil {
 		return nil
 	}
 	return workout
 }
 
-func DeleteWorkouts(userId uint) *Workout {
-
-	workout := &Workout{}
-	err := GetDB().Table("workouts").Where("user_id = ?", userId).Delete(workout).Error
-	if err != nil {
-		return nil
-	}
-	return workout
-}
-
-func GetWorkouts(userId uint) []*Workout {
+func GetUsersCurrentWorkouts(userId uint) []*Workout {
 
 	workouts := make([]*Workout, 0)
 	err := GetDB().Table("workouts").Where("user_id = ?", userId).Find(&workouts).Error
