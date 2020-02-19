@@ -45,4 +45,6 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
+
+	defer models.GetDB()
 }

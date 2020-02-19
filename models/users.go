@@ -40,16 +40,16 @@ func (user *User) Validate() (map[string]interface{}, bool) {
 	if len(user.Password) < 6 {
 		return u.Message(false, "Password is required"), false
 	}
+
+	var email string
+
 	//check for errors and duplicate emails
-	result, err := psql.Select("email").From("users").Where(sq.Eq{"email": user.Email}).RunWith(db).Query()
-	fmt.Println("result ", result)
-	fmt.Println("err ", err)
-
-
+	err := psql.Select("email").From("users").Where("email=$1", user.Email).RunWith(db).QueryRow().Scan(&email)
 	if err != nil && err != sql.ErrNoRows {
 		return u.Message(false, "Connection error. Please retry"), false
 	}
-	if result != nil {
+
+	if email == user.Email {
 		return u.Message(false, "Email address already in use by another user."), false
 	}
 
@@ -66,16 +66,16 @@ func (user *User) Create() (map[string]interface{}, string) {
 	user.Password = string(hashedPassword)
 
 	//// Prevent anyone but users from being created
-	//user.Role = "user"
+	user.Role = "user"
 
 	query := psql.Insert("users").
-		Columns( "email", "password", "role", "program").
-		Values(user.Email, user.Password, user.Role, user.Workout).
+		Columns( "email", "password", "role").
+		Values(user.Email, user.Password, user.Role).
 		Suffix("RETURNING \"userid\"").
 		RunWith(db).
 		PlaceholderFormat(sq.Dollar)
 
-	err := query.QueryRow().Scan(user.UserId)
+	err := query.QueryRow().Scan(&user.UserId)
 
 	if user.UserId <= 0 || err != nil{
 		return u.Message(false, "Failed to create user, connection error."), ""

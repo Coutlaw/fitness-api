@@ -30,12 +30,14 @@ func init() {
 		fmt.Print(err)
 	}
 
-	defer conn.Close()
-
 	err = conn.Ping()
 	if err != nil {
 		panic(err)
 	}
 
 	db = conn
+}
+
+func GetDB() *sql.DB{
+	return db
 }
