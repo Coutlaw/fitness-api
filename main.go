@@ -21,16 +21,16 @@ func main() {
 	router.HandleFunc("/api/users/login", controllers.Authenticate).Methods("POST")
 
 	// Create a workout (admins only)
-	router.HandleFunc("/api/users/workouts", controllers.CreateWorkout).Methods("POST")
-
-	// Get all Workouts (needed for trainers
-	router.HandleFunc("/api/users/workouts", controllers.GetWorkouts).Methods("GET")
-
-	// Get a workout by workoutId
-	router.HandleFunc("/api/users/workouts/{workoutId}", controllers.GetWorkoutById).Methods("GET")
-
-	// Delete a workout by workoutId
-	router.HandleFunc("/api/users/workouts/{workoutId}", controllers.DeleteWorkoutById).Methods("DELETE")
+	//router.HandleFunc("/api/users/workouts", controllers.CreateWorkout).Methods("POST")
+	//
+	//// Get all Workouts (needed for trainers
+	//router.HandleFunc("/api/users/workouts", controllers.GetWorkouts).Methods("GET")
+	//
+	//// Get a workout by workoutId
+	//router.HandleFunc("/api/users/workouts/{workoutId}", controllers.GetWorkoutById).Methods("GET")
+	//
+	//// Delete a workout by workoutId
+	//router.HandleFunc("/api/users/workouts/{workoutId}", controllers.DeleteWorkoutById).Methods("DELETE")
 
 	router.Use(models.SessionAuthentication) //attach JWT auth middleware
 
