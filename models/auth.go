@@ -42,12 +42,16 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 
 		tk := &TkRole{}
 		// search for the token in the DB
-		// TODO undo comment
-		//err = GetDB().Select("session_tk, role, userId").Table("tokens").Joins("join users on users.id=tokens.userId").Where("session_tk = ?", sessionToken.Value).Find(tk).Error
-		//if err != nil {
-		//	http.Error(w, "session token does not match any users, please log in again", http.StatusForbidden)
-		//	return
-		//}
+		err = psql.Select("session_tk, role, userId").
+			From("tokens").Join("join users on users.id=tokens.userId").
+			Where("session_tk=$1", sessionToken.Value).
+			RunWith(db).
+			QueryRow().
+			Scan(tk)
+		if err != nil {
+			http.Error(w, "session token does not match any users, please log in again", http.StatusForbidden)
+			return
+		}
 
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
 		// Log the user

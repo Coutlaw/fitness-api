@@ -19,7 +19,8 @@ type User struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
-	Workout  uint   `json:"workout_id"`
+	// This is a nullable field
+	Program  sql.NullInt64   `json:"program_id"`
 }
 
 // `Token` belongs to `User`, `UserID` is the foreign key
@@ -101,37 +102,49 @@ func (user *User) Create() (map[string]interface{}, string) {
 
 func Login(email, password string) (map[string]interface{}, string) {
 
-	//user := &User{}
-	//err := "" //GetDB().Table("users").Where("email = ?", email).First(user).Error
-	//if err != nil {
-	//	if err == gorm.ErrRecordNotFound {
-	//		return u.Message(false, "Email address not found"), ""
-	//	}
-	//	return u.Message(false, "Connection error. Please retry"), ""
-	//}
-	//
-	//err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	//if err != nil && err == bcrypt.ErrMismatchedHashAndPassword { //Password does not match!
-	//	return u.Message(false, "Invalid login credentials. Please try again"), ""
-	//}
-	////Worked! Logged In
-	//user.Password = ""
-	//
-	//// Create a new random session token
+	user := User{}
+	err := psql.Select("*").
+		From("users").
+		Where("email=$1", email).
+		RunWith(db).
+		QueryRow().
+		Scan(&user.UserId, &user.Email, &user.Password, &user.Role, &user.Program)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return u.Message(false, "Email address not found"), ""
+		}
+		return u.Message(false, "Connection error. Please retry"), ""
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword { //Password does not match!
+		return u.Message(false, "Invalid login credentials. Please try again"), ""
+	}
+	//Worked! Logged In
+	user.Password = ""
+
+	// Create a new random session token
 	sessionToken:= uuid.NewV4().String()
-	//
-	//tk := &Token{
-	//	UserId: user.UserId,
-	//	SessionTK: sessionToken,
-	//}
-	//
-	//err = nil //GetDB().Table("tokens").Where("userId = ?", user.UserId).Update("session_tk", sessionToken).Error
-	//if err != nil {
-	//	GetDB().Create(tk)
-	//}
+
+	sqls, args, err := psql.Update("tokens").
+		Set("sessiontk", sessionToken).
+		Where("userid=$1", user.UserId).
+		ToSql()
+
+	_, err = db.Exec(sqls, args...)
+	if err != nil {
+		sqlss, argss, _ := psql.Insert("").
+			Into("tokens").
+			Columns("userid", "sessiontk").
+			Values(user.UserId, sessionToken).
+			ToSql()
+
+		_, _ = db.Exec(sqlss, argss...)
+	}
 
 	resp := u.Message(true, "Logged In")
-	//resp["user"] = user
+	resp["user"] = user
 
 	return resp, sessionToken
 }
