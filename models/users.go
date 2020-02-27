@@ -3,13 +3,10 @@ package models
 import (
 	"database/sql"
 	u "fitness-api/utils"
-	"fmt"
-	sq "github.com/Masterminds/squirrel"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
 )
-var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 /*
 JWT claims struct
 */
@@ -45,7 +42,7 @@ func (user *User) Validate() (map[string]interface{}, bool) {
 	var email string
 
 	//check for errors and duplicate emails
-	err := psql.Select("email").From("users").Where("email=$1", user.Email).RunWith(db).QueryRow().Scan(&email)
+	err := db.QueryRow("Select email FROM users WHERE email=$1", user.Email).Scan(&email)
 	if err != nil && err != sql.ErrNoRows {
 		return u.Message(false, "Connection error. Please retry"), false
 	}
@@ -69,14 +66,7 @@ func (user *User) Create() (map[string]interface{}, string) {
 	//// Prevent anyone but users from being created
 	user.Role = "user"
 
-	query := psql.Insert("users").
-		Columns( "email", "password", "role").
-		Values(user.Email, user.Password, user.Role).
-		Suffix("RETURNING \"userid\"").
-		RunWith(db).
-		PlaceholderFormat(sq.Dollar)
-
-	err := query.QueryRow().Scan(&user.UserId)
+	err := db.QueryRow("INSERT into users (email, password, role)VALUES ($1, $2, $3) RETURNING userid", user.Email, user.Password, user.Role).Scan(&user.UserId)
 
 	if user.UserId <= 0 || err != nil{
 		return u.Message(false, "Failed to create user, connection error."), ""
@@ -87,13 +77,7 @@ func (user *User) Create() (map[string]interface{}, string) {
 	// Create a new random session token
 	sessionToken:= uuid.NewV4().String()
 
-	sqls, args, err := psql.Insert("").
-		Into("tokens").
-		Columns("userid", "sessiontk").
-		Values(user.UserId, sessionToken).
-		ToSql()
-
-	_, _ = db.Exec(sqls, args...)
+	_, err = db.Query("UPDATE tokens SET sessiontk=$1 WHERE userid=$2", sessionToken, user.UserId)
 
 	response := u.Message(true, "user has been created")
 	response["user"] = user
@@ -103,12 +87,7 @@ func (user *User) Create() (map[string]interface{}, string) {
 func Login(email, password string) (map[string]interface{}, string) {
 
 	user := User{}
-	err := psql.Select("*").
-		From("users").
-		Where("email=$1", email).
-		RunWith(db).
-		QueryRow().
-		Scan(&user.UserId, &user.Email, &user.Password, &user.Role, &user.Program)
+	err := db.QueryRow("SELECT * from users WHERE email=$1", email).Scan(&user.UserId, &user.Email, &user.Password, &user.Role, &user.Program)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -127,21 +106,7 @@ func Login(email, password string) (map[string]interface{}, string) {
 	// Create a new random session token
 	sessionToken:= uuid.NewV4().String()
 
-	sqls, args, err := psql.Update("tokens").
-		Set("sessiontk", sessionToken).
-		Where("userid=$1", user.UserId).
-		ToSql()
-
-	_, err = db.Exec(sqls, args...)
-	if err != nil {
-		sqlss, argss, _ := psql.Insert("").
-			Into("tokens").
-			Columns("userid", "sessiontk").
-			Values(user.UserId, sessionToken).
-			ToSql()
-
-		_, _ = db.Exec(sqlss, argss...)
-	}
+	_, err = db.Query("UPDATE tokens SET sessiontk=$1 WHERE userid=$2", sessionToken, user.UserId)
 
 	resp := u.Message(true, "Logged In")
 	resp["user"] = user

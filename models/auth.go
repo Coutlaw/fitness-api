@@ -36,18 +36,16 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 			return
 		}
 
-		// TODO remove this later
-		fmt.Println("session expiration: ", sessionToken.Expires.Unix())
-		fmt.Println("session token: ", sessionToken)
+		//fmt.Println("session expiration: ", sessionToken.Expires.Unix())
+		//fmt.Println("session token: ", sessionToken)
 
-		tk := &TkRole{}
+		tk := TkRole{}
 		// search for the token in the DB
-		err = psql.Select("session_tk, role, userId").
-			From("tokens").Join("join users on users.id=tokens.userId").
-			Where("session_tk=$1", sessionToken.Value).
-			RunWith(db).
-			QueryRow().
-			Scan(tk)
+		err = db.
+			QueryRow("SELECT sessiontk, role, tokens.userid FROM tokens JOIN users ON tokens.userid = users.userid WHERE sessiontk=$1", sessionToken.Value).
+			Scan(&tk.SessionTK, &tk.Role, &tk.UserId)
+
+
 		if err != nil {
 			http.Error(w, "session token does not match any users, please log in again", http.StatusForbidden)
 			return
@@ -56,7 +54,7 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 		//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
 		// Log the user
 		fmt.Println(fmt.Sprintf("UserId: %v authenticated successfully", tk.UserId))
-		ctx := context.WithValue(r.Context(), "TkRole", *tk)
+		ctx := context.WithValue(r.Context(), "TkRole", tk)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r) //proceed in the middleware chain!
 	});
