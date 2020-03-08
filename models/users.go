@@ -3,26 +3,28 @@ package models
 import (
 	"database/sql"
 	u "fitness-api/utils"
+	"strings"
+
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
-	"strings"
 )
+
 /*
 JWT claims struct
 */
 //a struct to rep user user
 type User struct {
-	UserId uint `json:"userId"`
+	UserId   uint   `json:"user_id"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
 	// This is a nullable field
-	Program  sql.NullInt64   `json:"program_id"`
+	Program sql.NullInt64 `json:"program_id"`
 }
 
 // `Token` belongs to `User`, `UserID` is the foreign key
 type Token struct {
-	UserId uint
+	UserId    uint
 	SessionTK string
 }
 
@@ -66,18 +68,18 @@ func (user *User) Create() (map[string]interface{}, string) {
 	//// Prevent anyone but users from being created
 	user.Role = "user"
 
-	err := db.QueryRow("INSERT into users (email, password, role)VALUES ($1, $2, $3) RETURNING userid", user.Email, user.Password, user.Role).Scan(&user.UserId)
+	err := db.QueryRow("INSERT into users (email, password, role) VALUES ($1, $2, $3) RETURNING user_id", user.Email, user.Password, user.Role).Scan(&user.UserId)
 
-	if user.UserId <= 0 || err != nil{
+	if user.UserId <= 0 || err != nil {
 		return u.Message(false, "Failed to create user, connection error."), ""
 	}
 
 	user.Password = "" //delete password
 
 	// Create a new random session token
-	sessionToken:= uuid.NewV4().String()
+	sessionToken := uuid.NewV4().String()
 
-	_, err = db.Query("UPDATE tokens SET sessiontk=$1 WHERE userid=$2", sessionToken, user.UserId)
+	_, err = db.Query("INSERT into tokens (session_tk, user_id) VALUES ($1, $2)", sessionToken, user.UserId)
 
 	response := u.Message(true, "user has been created")
 	response["user"] = user
@@ -104,9 +106,9 @@ func Login(email, password string) (map[string]interface{}, string) {
 	user.Password = ""
 
 	// Create a new random session token
-	sessionToken:= uuid.NewV4().String()
+	sessionToken := uuid.NewV4().String()
 
-	_, err = db.Query("UPDATE tokens SET sessiontk=$1 WHERE userid=$2", sessionToken, user.UserId)
+	_, err = db.Query("UPDATE tokens SET session_tk=$1 WHERE user_id=$2", sessionToken, user.UserId)
 
 	resp := u.Message(true, "Logged In")
 	resp["user"] = user

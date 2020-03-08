@@ -3,29 +3,25 @@ package models
 import (
 	"database/sql"
 	u "fitness-api/utils"
-	sq "github.com/Masterminds/squirrel"
 )
 
 type Program struct {
-	ProgramId uint `json:"programId"`
-	ProgramName string `json:"programName"`
-	ProgramCreator uint `json:"programCreator"`
+	ProgramId      uint   `json:"program_id"`
+	ProgramName    string `json:"program_name"`
+	ProgramCreator uint   `json:"program_creator"`
 	//DurationWeeks  uint `json:"duration"`
 }
 
 type ProgramAssignment struct {
-	UserId uint
+	UserId    uint
 	ProgramId uint
 }
-
-var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-
 
 // create Validation
 func (program *Program) Validate() (string, bool) {
 
 	if program.ProgramName == "" {
-		return "ProgramName should be included in request", false
+		return "Program Name should be included in request", false
 	}
 
 	//if program.DurationWeeks == 0 {
@@ -57,9 +53,9 @@ func (program *Program) Create(userId uint) map[string]interface{} {
 		return u.Message(false, resp)
 	}
 
-	err := db.QueryRow("INSERT into programs (programname, programcreator)VALUES ($1, $2) RETURNING programid", program.ProgramName, userId).Scan(&program.ProgramId)
+	err := db.QueryRow("INSERT into programs (program_name, program_creator)VALUES ($1, $2) RETURNING program_id", program.ProgramName, userId).Scan(&program.ProgramId)
 
-	if program.ProgramId <= 0 || err != nil{
+	if program.ProgramId <= 0 || err != nil {
 		return u.Message(false, "Failed to create program, connection error.")
 	}
 	program.ProgramCreator = userId
@@ -72,7 +68,7 @@ func GetProgramById(programId uint) map[string]interface{} {
 
 	program := &Program{}
 
-	err := db.QueryRow("SELECT * from programs WHERE programid=$1", programId).Scan(&program.ProgramId, &program.ProgramName, &program.ProgramCreator)
+	err := db.QueryRow("SELECT * from programs WHERE program_id=$1", programId).Scan(&program.ProgramId, &program.ProgramName, &program.ProgramCreator)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

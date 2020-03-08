@@ -4,9 +4,10 @@ import (
 	"fitness-api/controllers"
 	"fitness-api/models"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -22,8 +23,9 @@ func main() {
 
 	//Create a program (trainers only)
 	router.HandleFunc("/api/users/programs", controllers.CreateProgram).Methods("POST")
+
 	// Get a workout by workoutId
-	router.HandleFunc("/api/users/programs/{programId}", controllers.GetProgramById).Methods("GET")
+	router.HandleFunc("/api/users/programs/{programId}", controllers.GetProgramByID).Methods("GET")
 
 	//
 	//// Get all Workouts (needed for trainers

@@ -8,9 +8,9 @@ import (
 )
 
 type TkRole struct {
-	UserId uint
+	UserId    uint
 	SessionTK string
-	Role string
+	Role      string
 }
 
 var SessionAuthentication = func(next http.Handler) http.Handler {
@@ -18,7 +18,7 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		notAuth := []string{"/api/users/new", "/api/users/login"} //List of endpoints that doesn't require auth
-		requestPath := r.URL.Path                               //current request path
+		requestPath := r.URL.Path                                 //current request path
 
 		//check if request does not need authentication, serve the request if it doesn't need it
 		for _, value := range notAuth {
@@ -31,7 +31,7 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 
 		sessionToken, err := r.Cookie("session_token")
 
-		if err != nil ||  time.Now().Unix() < sessionToken.Expires.Unix() {
+		if err != nil || time.Now().Unix() < sessionToken.Expires.Unix() {
 			http.Error(w, "invalid or expired session_token, please log in again", http.StatusForbidden)
 			return
 		}
@@ -42,9 +42,8 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 		tk := TkRole{}
 		// search for the token in the DB
 		err = db.
-			QueryRow("SELECT sessiontk, role, tokens.userid FROM tokens JOIN users ON tokens.userid = users.userid WHERE sessiontk=$1", sessionToken.Value).
+			QueryRow("SELECT session_tk, role, tokens.user_id FROM tokens JOIN users ON tokens.user_id = users.user_id WHERE session_tk=$1", sessionToken.Value).
 			Scan(&tk.SessionTK, &tk.Role, &tk.UserId)
-
 
 		if err != nil {
 			http.Error(w, "session token does not match any users, please log in again", http.StatusForbidden)
@@ -57,5 +56,5 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "TkRole", tk)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r) //proceed in the middleware chain!
-	});
+	})
 }

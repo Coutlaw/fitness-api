@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fitness-api/models"
 	u "fitness-api/utils"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 var CreateProgram = func(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +22,7 @@ var CreateProgram = func(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Only admins can create things
-	if tkRole.Role != "trainer"{
+	if tkRole.Role != "trainer" {
 		http.Error(w, "Only trainers can create programs", http.StatusUnauthorized)
 		return
 	}
@@ -34,7 +35,7 @@ var CreateProgram = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, resp)
 }
 
-var GetProgramById = func(w http.ResponseWriter, r *http.Request) {
+var GetProgramByID = func(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch the inline params
 	vars := mux.Vars(r)
@@ -50,6 +51,7 @@ var GetProgramById = func(w http.ResponseWriter, r *http.Request) {
 	resp := models.GetProgramById(uint(programId))
 	u.Respond(w, resp)
 }
+
 //
 //var GetPrograms = func(w http.ResponseWriter, r *http.Request) {
 //
