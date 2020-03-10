@@ -6,10 +6,10 @@ import (
 )
 
 type Program struct {
-	ProgramId      uint   `json:"program_id"`
-	ProgramName    string `json:"program_name"`
-	ProgramCreator uint   `json:"program_creator"`
-	//DurationWeeks  uint `json:"duration"`
+	ProgramId      uint                   `json:"program_id"`
+	ProgramName    string                 `json:"program_name"`
+	ProgramCreator uint                   `json:"program_creator"`
+	NumWeeks       map[string]interface{} `json:"number_of_weeks"`
 }
 
 type ProgramAssignment struct {
