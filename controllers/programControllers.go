@@ -35,20 +35,21 @@ var CreateProgram = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, resp)
 }
 
+// GetProgramByID : gets a specific program by unique identifier
 var GetProgramByID = func(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch the inline params
 	vars := mux.Vars(r)
-	programIdParam := vars["programId"]
+	programIDParam := vars["programID"]
 
 	// Convert inline param to uint
-	programId, err := strconv.ParseUint(programIdParam, 10, 32)
+	programID, err := strconv.ParseUint(programIDParam, 10, 32)
 	if err != nil {
-		http.Error(w, "Error with programId param, could not be converted to uint", http.StatusBadRequest)
+		http.Error(w, "Error with programID param, could not be converted to uint", http.StatusBadRequest)
 		return
 	}
 
-	resp := models.GetProgramById(uint(programId))
+	resp := models.GetProgramByID(uint(programID))
 	u.Respond(w, resp)
 }
 
@@ -66,19 +67,19 @@ var GetProgramByID = func(w http.ResponseWriter, r *http.Request) {
 //
 //	// Fetch the inline params
 //	vars := mux.Vars(r)
-//	programIdParam := vars["programId"]
+//	programIDParam := vars["programID"]
 //
 //	// Convert inline param to uint
-//	programId, err := strconv.ParseUint(programIdParam, 10, 32)
+//	programID, err := strconv.ParseUint(programIDParam, 10, 32)
 //	if err != nil {
-//		http.Error(w, "Error with programId param, could not be converted to uint", http.StatusBadRequest)
+//		http.Error(w, "Error with programID param, could not be converted to uint", http.StatusBadRequest)
 //		return
 //	}
 //
 //	// pull User Id from context
 //	//tkRole := r.Context().Value("TkRole").(models.TkRole)
 //
-//	_ = models.DeleteProgramById(uint(programId))
+//	_ = models.DeleteProgramById(uint(programID))
 //	resp := u.Message(true, "success")
 //	u.Respond(w, resp)
 //}

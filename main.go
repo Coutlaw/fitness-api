@@ -22,10 +22,10 @@ func main() {
 	router.HandleFunc("/api/users/login", controllers.Authenticate).Methods("POST")
 
 	//Create a program (trainers only)
-	router.HandleFunc("/api/programs", controllers.CreateProgram).Methods("POST")
+	router.HandleFunc("/api/users/programs", controllers.CreateProgram).Methods("POST")
 
 	// Get a workout by workoutId
-	router.HandleFunc("/api/programs/{programId}", controllers.GetProgramByID).Methods("GET")
+	router.HandleFunc("/api/users/programs/{programID}", controllers.GetProgramByID).Methods("GET")
 
 	//// Get all Workouts (needed for trainers
 	//router.HandleFunc("/api/users/workouts", controllers.GetWorkouts).Methods("GET")
@@ -37,10 +37,12 @@ func main() {
 
 	router.Use(models.SessionAuthentication) //attach JWT auth middleware
 
-	port := os.Args[1]
+	var port string
 
-	if port == "" {
-		port = "8000" //localhost
+	if len(os.Args) > 1 {
+		port = os.Args[1]
+	} else {
+		port = "8000"
 	}
 
 	fmt.Println("Listening on port: " + port)
