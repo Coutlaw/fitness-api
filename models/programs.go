@@ -51,12 +51,6 @@ type Exercise struct {
 	RestTime  string   `json:"rest_between_sets"`
 }
 
-// ProgramAssignment : mapping between programs and the user that created/is using them
-type ProgramAssignment struct {
-	UserID    uint
-	ProgramID uint
-}
-
 // Validate : Validate the program structure from the request body
 func (program *Program) Validate() (string, bool) {
 
@@ -72,21 +66,6 @@ func (program *Program) Validate() (string, bool) {
 	return "success", true
 }
 
-// ValidateAssignment : make sure both the user and program exist before assignment
-func (programAss *ProgramAssignment) ValidateAssignment() (string, bool) {
-
-	if programAss.UserID == 0 {
-		return "Destination user should be included in the request", false
-	}
-
-	if programAss.ProgramID == 0 {
-		return "Program Id of assignment should be included in the request", false
-	}
-
-	//All the required parameters are present
-	return "success", true
-}
-
 // Create : create a program function
 func (program *Program) Create(userID uint) map[string]interface{} {
 
@@ -94,7 +73,16 @@ func (program *Program) Create(userID uint) map[string]interface{} {
 		return u.Message(false, resp)
 	}
 
-	err := db.QueryRow("INSERT into programs (program_name, program_creator) VALUES ($1, $2) RETURNING program_id", program.ProgramName, userID).Scan(&program.ProgramID)
+	// Using QueryRow over exec because I need the id that the DB generated
+	err := db.
+		QueryRow(
+			"INSERT into base_programs (program_name, program_creator, number_of_weeks, program_data) VALUES ($1, $2, $3, $4) RETURNING base_program_id",
+			program.ProgramName,
+			userID,
+			program.NumWeeks,
+			// potential issue with json provided
+			program.ProgramData).
+		Scan(&program.ProgramID)
 
 	if program.ProgramID <= 0 || err != nil {
 		return u.Message(false, "Failed to create program, connection error.")
@@ -110,7 +98,7 @@ func GetProgramByID(programID uint) map[string]interface{} {
 
 	program := Program{}
 
-	err := db.QueryRow("SELECT * from programs WHERE program_id=$1", programID).
+	err := db.QueryRow("SELECT * from base_programs WHERE base_program_id=$1", programID).
 		Scan(&program.ProgramID, &program.ProgramName, &program.ProgramCreator, &program.NumWeeks, &program.ProgramData)
 
 	if err != nil {
@@ -150,15 +138,3 @@ func GetProgramByID(programID uint) map[string]interface{} {
 //	return programs
 //}
 //
-//func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{} {
-//
-//	if resp, ok := programAss.ValidateAssignment(); !ok {
-//		return u.Message(false, resp)
-//	}
-//
-//	GetDB().Table("users").Where("userID = ?", programAss.UserID).Update("program_id", programAss.ProgramID)
-//
-//	resp := u.Message(true, "success")
-//	resp["Assignment"] = programAss
-//	return resp
-//}

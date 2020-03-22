@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// CreateProgram : creates a program
 var CreateProgram = func(w http.ResponseWriter, r *http.Request) {
 
 	tkRole := r.Context().Value("TkRole").(models.TkRole)
@@ -53,6 +54,42 @@ var GetProgramByID = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, resp)
 }
 
+// AssignProgramToUser : assigns an existing program to a user
+var AssignProgramToUser = func(w http.ResponseWriter, r *http.Request) {
+
+	tkRole := r.Context().Value("TkRole").(models.TkRole)
+
+	// Only admins can create things
+	if tkRole.Role != "trainer" {
+		http.Error(w, "Only trainers can assign programs", http.StatusUnauthorized)
+		return
+	}
+
+	// Fetch the inline params
+	vars := mux.Vars(r)
+	userIDParam := vars["userID"]
+
+	// Convert inline param to uint
+	userID, err := strconv.ParseUint(userIDParam, 10, 32)
+	if err != nil {
+		http.Error(w, "Error with userID param, could not be converted to uint", http.StatusBadRequest)
+		return
+	}
+
+	programAss := &models.ProgramAssignment{}
+
+	err = json.NewDecoder(r.Body).Decode(programAss)
+	if err != nil {
+		http.Error(w, "Error while decoding request body, your JSON is probably malformed", http.StatusBadRequest)
+		return
+	}
+
+	programAss.UserID = uint(userID)
+
+	resp := programAss.AssignProgramToUser()
+	u.Respond(w, resp)
+}
+
 //
 //var GetPrograms = func(w http.ResponseWriter, r *http.Request) {
 //
@@ -93,30 +130,7 @@ var GetProgramByID = func(w http.ResponseWriter, r *http.Request) {
 //	u.Respond(w, resp)
 //}
 //
-//var AssignProgramToUser = func(w http.ResponseWriter, r *http.Request) {
-//
-//	tkRole := r.Context().Value("TkRole").(models.TkRole)
-//
-//	// Only admins can create things
-//	if tkRole.Role != "admin"{
-//		http.Error(w, "Only admins can assign programs", http.StatusUnauthorized)
-//		return
-//	}
-//
-//	programAss := &models.ProgramAssignment{}
-//
-//	err := json.NewDecoder(r.Body).Decode(programAss)
-//	if err != nil {
-//		http.Error(w, "Error while decoding request body, your JSON is probably malformed", http.StatusBadRequest)
-//		return
-//	}
-//
-//	data := programAss.AssignProgramToUser()
-//	resp := u.Message(true, "success")
-//	resp["data"] = data
-//	u.Respond(w, resp)
-//}
-//
+
 //var UnAssignProgram = func(w http.ResponseWriter, r *http.Request) {
 //
 //	tkRole := r.Context().Value("TkRole").(models.TkRole)

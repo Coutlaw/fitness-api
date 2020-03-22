@@ -15,17 +15,27 @@ func main() {
 
 	// ROUTES
 
+	// USER ROUTES
 	// Create a user (gets a jwt)
 	router.HandleFunc("/api/users/new", controllers.CreateAccount).Methods("POST")
 
 	// Get a new JWT if users is expired
 	router.HandleFunc("/api/users/login", controllers.Authenticate).Methods("POST")
 
-	//Create a program (trainers only)
+	// BASE PROGRAM ROUTES (Trainers Only)
+	//Create a base level program (trainers only)
 	router.HandleFunc("/api/users/programs", controllers.CreateProgram).Methods("POST")
 
-	// Get a workout by workoutId
+	// Get a base program by its unique id
 	router.HandleFunc("/api/users/programs/{programID}", controllers.GetProgramByID).Methods("GET")
+
+	// TODO: update and delete base programs
+
+	// PROGRAM ROUTES
+	// Assign a program to a user
+	router.HandleFunc("/api/users/{userID}/programs", controllers.AssignProgramToUser).Methods("POST")
+
+	// TODO: Un-assign a program to a user
 
 	//// Get all Workouts (needed for trainers
 	//router.HandleFunc("/api/users/workouts", controllers.GetWorkouts).Methods("GET")
