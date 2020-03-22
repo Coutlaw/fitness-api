@@ -110,7 +110,8 @@ func GetProgramByID(programID uint) map[string]interface{} {
 
 	program := Program{}
 
-	err := db.QueryRow("SELECT * from programs WHERE program_id=$1", programID).Scan(&program.ProgramID, &program.ProgramName, &program.ProgramCreator, &program.NumWeeks, &program.ProgramData)
+	err := db.QueryRow("SELECT * from programs WHERE program_id=$1", programID).
+		Scan(&program.ProgramID, &program.ProgramName, &program.ProgramCreator, &program.NumWeeks, &program.ProgramData)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
