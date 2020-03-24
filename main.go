@@ -29,13 +29,21 @@ func main() {
 	// Get a base program by its unique id
 	router.HandleFunc("/api/users/programs/{programID}", controllers.GetProgramByID).Methods("GET")
 
-	// TODO: update and delete base programs
+	// TODO:
+	// update program fields (trainer)
+	// delete program (trainer)
 
 	// PROGRAM ROUTES
-	// Assign a program to a user
+	// Assign a program to a user (trainer)
 	router.HandleFunc("/api/users/{userID}/programs", controllers.AssignProgramToUser).Methods("POST")
 
-	// TODO: Un-assign a program to a user
+	// TODO:
+	// Un-assign a program to a user (trainer)
+	router.HandleFunc("/api/users/{userID}/programs/unassign", controllers.UnAssignProgram).Methods("POST")
+	// get a users program (specifc user only)
+	// get specific parts of a program (specific user only) Ex week, day, exercise
+	// leave a comment about a day
+	// input data about what the user completed
 
 	//// Get all Workouts (needed for trainers
 	//router.HandleFunc("/api/users/workouts", controllers.GetWorkouts).Methods("GET")

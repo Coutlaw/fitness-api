@@ -44,14 +44,14 @@ func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{
 	}
 
 	// store the program in the programs table (to allow specific changes and comments from the user)
-	_, err = db.
-		Exec(
-			"INSERT into programs (program_id, program_name, program_creator, number_of_weeks, program_data) VALUES ($1, $2, $3, $4, $5)",
-			baseProgram.ProgramID,
+	err = db.
+		QueryRow(
+			"INSERT into programs (program_name, program_creator, number_of_weeks, program_data) VALUES ($1, $2, $3, $4) RETURNING program_id",
 			baseProgram.ProgramName,
 			programAss.UserID,
 			baseProgram.NumWeeks,
-			baseProgram.ProgramData)
+			baseProgram.ProgramData).
+		Scan(&programAss.ProgramID)
 
 	if err != nil {
 		return u.Message(false, "Error, unable to replicate base program")
@@ -67,5 +67,33 @@ func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{
 
 	resp := u.Message(true, "success")
 	resp["Assignment"] = programAss
+	return resp
+}
+
+// UnAssignProgramToUser : handles assignment of a program to a user
+func UnAssignProgramToUser(userID uint) map[string]interface{} {
+
+	// sub function query
+	/*
+		UPDATE users x
+		SET    program = null
+		FROM  (SELECT * FROM users WHERE user_id = 2 FOR UPDATE) y
+		WHERE  x.user_id = y.user_id
+		RETURNING y.program
+	*/
+	// remove assignment FK
+	_, err := db.Query("UPDATE users SET program=null WHERE user_id=$2", userID)
+
+	// store the program in the programs table (to allow specific changes and comments from the user)
+	// _, err = db.
+	// 	Exec(
+	// 		"DELETE from programs where program_id=$1", programAss.ProgramID)
+
+	if err != nil {
+		return u.Message(false, "Error, unable to un assign program")
+	}
+
+	resp := u.Message(true, "success")
+	resp["Assignment"] = "null"
 	return resp
 }

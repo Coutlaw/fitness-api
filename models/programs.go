@@ -80,7 +80,6 @@ func (program *Program) Create(userID uint) map[string]interface{} {
 			program.ProgramName,
 			userID,
 			program.NumWeeks,
-			// potential issue with json provided
 			program.ProgramData).
 		Scan(&program.ProgramID)
 

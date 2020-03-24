@@ -90,6 +90,34 @@ var AssignProgramToUser = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, resp)
 }
 
+// UnAssignProgram : Un assigns a program from a user
+var UnAssignProgram = func(w http.ResponseWriter, r *http.Request) {
+
+	tkRole := r.Context().Value("TkRole").(models.TkRole)
+
+	// Only admins can create things
+	if tkRole.Role != "trainer" {
+		http.Error(w, "Only trainers can assign programs", http.StatusUnauthorized)
+		return
+	}
+
+	// Fetch the inline params
+	vars := mux.Vars(r)
+	userIDParam := vars["userID"]
+
+	// Convert inline param to uint
+	userID, err := strconv.ParseUint(userIDParam, 10, 32)
+	if err != nil {
+		http.Error(w, "Error with userID param, could not be converted to uint", http.StatusBadRequest)
+		return
+	}
+
+	data := models.UnAssignProgramToUser(uint(userID))
+	resp := u.Message(true, "success")
+	resp["data"] = data
+	u.Respond(w, resp)
+}
+
 //
 //var GetPrograms = func(w http.ResponseWriter, r *http.Request) {
 //
@@ -130,19 +158,3 @@ var AssignProgramToUser = func(w http.ResponseWriter, r *http.Request) {
 //	u.Respond(w, resp)
 //}
 //
-
-//var UnAssignProgram = func(w http.ResponseWriter, r *http.Request) {
-//
-//	tkRole := r.Context().Value("TkRole").(models.TkRole)
-//
-//	// Only admins can create things
-//	if tkRole.Role != "admin"{
-//		http.Error(w, "Only admins can assign programs", http.StatusUnauthorized)
-//		return
-//	}
-//
-//	data := models.GetProgramById(tkRole.UserId)
-//	resp := u.Message(true, "success")
-//	resp["data"] = data
-//	u.Respond(w, resp)
-//}
