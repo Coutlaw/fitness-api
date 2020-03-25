@@ -17,10 +17,10 @@ func main() {
 
 	// USER ROUTES
 	// Create a user (gets a jwt)
-	router.HandleFunc("/api/users/new", controllers.CreateAccount).Methods("POST")
+	router.HandleFunc("/users/new", controllers.CreateAccount).Methods("POST")
 
 	// Get a new JWT if users is expired
-	router.HandleFunc("/api/users/login", controllers.Authenticate).Methods("POST")
+	router.HandleFunc("/users/login", controllers.Authenticate).Methods("POST")
 
 	// TODO:
 	// update a users info
@@ -29,10 +29,10 @@ func main() {
 
 	// BASE PROGRAM ROUTES (Trainers Only)
 	//Create a base level program (trainers only)
-	router.HandleFunc("/api/users/programs", controllers.CreateProgram).Methods("POST")
+	router.HandleFunc("/users/program", controllers.CreateProgram).Methods("POST")
 
 	// Get a base program by its unique id
-	router.HandleFunc("/api/users/programs/{programID}", controllers.GetProgramByID).Methods("GET")
+	router.HandleFunc("/users/program/{programID}", controllers.GetProgramByID).Methods("GET")
 
 	// TODO:
 	// update base program fields (trainer)
@@ -40,10 +40,10 @@ func main() {
 
 	// PROGRAM ROUTES
 	// Assign a program to a user (trainer)
-	router.HandleFunc("/api/users/{userID}/program", controllers.AssignProgramToUser).Methods("POST")
+	router.HandleFunc("/users/{userID}/program", controllers.AssignProgramToUser).Methods("POST")
 
 	// Un-assign a program to a user (trainer)
-	router.HandleFunc("/api/users/{userID}/program/unassign", controllers.UnAssignProgram).Methods("POST")
+	router.HandleFunc("/users/{userID}/program/unassign", controllers.UnAssignProgram).Methods("POST")
 
 	// TODO:
 	// get a users program (specifc user only)
