@@ -36,7 +36,9 @@ func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{
 	// get the base program that will be assigned
 	baseProgram := Program{}
 
-	err := db.QueryRow("SELECT * from base_programs WHERE base_program_id=$1", programAss.ProgramID).
+	err := db.
+		QueryRow("SELECT base_program_id, program_name, program_creator, number_of_weeks, program_data from base_programs WHERE base_program_id=$1",
+			programAss.ProgramID).
 		Scan(&baseProgram.ProgramID, &baseProgram.ProgramName, &baseProgram.ProgramCreator, &baseProgram.NumWeeks, &baseProgram.ProgramData)
 
 	if err != nil {
@@ -46,11 +48,12 @@ func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{
 	// store the program in the programs table (to allow specific changes and comments from the user)
 	err = db.
 		QueryRow(
-			"INSERT into programs (program_name, program_creator, number_of_weeks, program_data) VALUES ($1, $2, $3, $4) RETURNING program_id",
+			"INSERT into programs (program_name, program_creator, number_of_weeks, program_data, base_program) VALUES ($1, $2, $3, $4, $5) RETURNING program_id",
 			baseProgram.ProgramName,
 			programAss.UserID,
 			baseProgram.NumWeeks,
-			baseProgram.ProgramData).
+			baseProgram.ProgramData,
+			baseProgram.ProgramID).
 		Scan(&programAss.ProgramID)
 
 	if err != nil {
@@ -73,21 +76,20 @@ func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{
 // UnAssignProgramToUser : handles assignment of a program to a user
 func UnAssignProgramToUser(userID uint) map[string]interface{} {
 
-	// sub function query
-	/*
-		UPDATE users x
-		SET    program = null
-		FROM  (SELECT * FROM users WHERE user_id = 2 FOR UPDATE) y
-		WHERE  x.user_id = y.user_id
-		RETURNING y.program
-	*/
+	// query to update the users table, returning the old program_id
+	updateReturningOriginalQuery := ` UPDATE users x
+																		SET    program = null
+																		FROM  (SELECT * FROM users WHERE user_id = $1 FOR UPDATE) y
+																		WHERE  x.user_id = y.user_id
+																		RETURNING y.program`
+	var originalProgramID uint
 	// remove assignment FK
-	_, err := db.Query("UPDATE users SET program=null WHERE user_id=$2", userID)
+	err := db.QueryRow(updateReturningOriginalQuery, userID).Scan(&originalProgramID)
 
-	// store the program in the programs table (to allow specific changes and comments from the user)
-	// _, err = db.
-	// 	Exec(
-	// 		"DELETE from programs where program_id=$1", programAss.ProgramID)
+	// delete the program from the program table
+	_, err = db.
+		Exec(
+			"DELETE from programs where program_id=$1", originalProgramID)
 
 	if err != nil {
 		return u.Message(false, "Error, unable to un assign program")

@@ -22,6 +22,11 @@ func main() {
 	// Get a new JWT if users is expired
 	router.HandleFunc("/api/users/login", controllers.Authenticate).Methods("POST")
 
+	// TODO:
+	// update a users info
+	// set a users account status {paid, behind, paused, cancelled}
+	// delete a user
+
 	// BASE PROGRAM ROUTES (Trainers Only)
 	//Create a base level program (trainers only)
 	router.HandleFunc("/api/users/programs", controllers.CreateProgram).Methods("POST")
@@ -30,27 +35,24 @@ func main() {
 	router.HandleFunc("/api/users/programs/{programID}", controllers.GetProgramByID).Methods("GET")
 
 	// TODO:
-	// update program fields (trainer)
+	// update base program fields (trainer)
 	// delete program (trainer)
 
 	// PROGRAM ROUTES
 	// Assign a program to a user (trainer)
-	router.HandleFunc("/api/users/{userID}/programs", controllers.AssignProgramToUser).Methods("POST")
+	router.HandleFunc("/api/users/{userID}/program", controllers.AssignProgramToUser).Methods("POST")
+
+	// Un-assign a program to a user (trainer)
+	router.HandleFunc("/api/users/{userID}/program/unassign", controllers.UnAssignProgram).Methods("POST")
 
 	// TODO:
-	// Un-assign a program to a user (trainer)
-	router.HandleFunc("/api/users/{userID}/programs/unassign", controllers.UnAssignProgram).Methods("POST")
 	// get a users program (specifc user only)
 	// get specific parts of a program (specific user only) Ex week, day, exercise
 	// leave a comment about a day
 	// input data about what the user completed
 
-	//// Get all Workouts (needed for trainers
+	//old dead code
 	//router.HandleFunc("/api/users/workouts", controllers.GetWorkouts).Methods("GET")
-	//
-
-	//
-	//// Delete a workout by workoutId
 	//router.HandleFunc("/api/users/workouts/{workoutId}", controllers.DeleteWorkoutById).Methods("DELETE")
 
 	router.Use(models.SessionAuthentication) //attach JWT auth middleware
