@@ -1,39 +1,55 @@
 package models
 
 import (
+	"database/sql"
 	"fmt"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/joho/godotenv"
 	"os"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
-var db *gorm.DB
+var db *sql.DB
 
 func init() {
 
-	e := godotenv.Load()
-	if e != nil {
-		fmt.Print(e)
+	var dbURI string
+
+	// Production config
+	remoteDB := os.Getenv("DATABASE_URL")
+
+	if remoteDB != "" {
+		dbURI = remoteDB
+	} else {
+		e := godotenv.Load()
+		if e != nil {
+			fmt.Print(e)
+		}
+
+		username := os.Getenv("TEST_DB_USER")
+		password := os.Getenv("TEST_DB_PASSWORD")
+		dbName := os.Getenv("TEST_DB_NAME")
+		dbHost := os.Getenv("TEST_DB_HOST")
+
+		dbURI = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
 	}
 
-	username := os.Getenv("TEST_DB_USER")
-	password := os.Getenv("TEST_DB_PASSWORD")
-	dbName := os.Getenv("TEST_DB_NAME")
-	dbHost := os.Getenv("TEST_DB_HOST")
+	fmt.Println(dbURI)
 
-	dbUri := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
-	fmt.Println(dbUri)
-
-	conn, err := gorm.Open("postgres", dbUri)
+	conn, err := sql.Open("postgres", dbURI)
 	if err != nil {
 		fmt.Print(err)
 	}
 
+	err = conn.Ping()
+	if err != nil {
+		panic(err)
+	}
+
 	db = conn
-	db.Debug().AutoMigrate(&User{}, &Program{}, &Token{})
 }
 
-func GetDB() *gorm.DB {
+// GetDB : initialization of db connection
+func GetDB() *sql.DB {
 	return db
 }

@@ -4,9 +4,10 @@ import (
 	"fitness-api/controllers"
 	"fitness-api/models"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -14,29 +15,57 @@ func main() {
 
 	// ROUTES
 
+	// USER ROUTES
 	// Create a user (gets a jwt)
-	router.HandleFunc("/api/users/new", controllers.CreateAccount).Methods("POST")
+	router.HandleFunc("/users/new", controllers.CreateUser).Methods("POST")
 
 	// Get a new JWT if users is expired
-	router.HandleFunc("/api/users/login", controllers.Authenticate).Methods("POST")
+	router.HandleFunc("/users/login", controllers.Authenticate).Methods("POST")
 
-	// Create a workout (admins only)
-	router.HandleFunc("/api/users/workouts", controllers.CreateProgram).Methods("POST")
+	// update a users info (only specific user)
+	router.HandleFunc("/users", controllers.UpdateUser).Methods("PUT")
 
-	// Get all Workouts (needed for trainers
-	router.HandleFunc("/api/users/workouts", controllers.GetUsersCurrentProgram).Methods("GET")
+	// TODO:
 
-	// Get a workout by workoutId
-	router.HandleFunc("/api/users/workouts/{workoutId}", controllers.GetProgramById).Methods("GET")
+	// set a users account status {paid, behind, paused, cancelled}
+	// delete a user
 
-	// Delete a workout by workoutId
-	router.HandleFunc("/api/users/workouts/{workoutId}", controllers.DeleteProgramById).Methods("DELETE")
+	// BASE PROGRAM ROUTES (Trainers Only)
+	//Create a base level program (trainers only)
+	router.HandleFunc("/users/program", controllers.CreateProgram).Methods("POST")
+
+	// Get a base program by its unique id
+	router.HandleFunc("/users/program/{programID}", controllers.GetProgramByID).Methods("GET")
+
+	// TODO:
+	// update base program fields (trainer)
+	// delete program (trainer)
+
+	// PROGRAM ROUTES
+	// Assign a program to a user (trainer)
+	router.HandleFunc("/users/{userID}/program", controllers.AssignProgramToUser).Methods("POST")
+
+	// Un-assign a program to a user (trainer)
+	router.HandleFunc("/users/{userID}/program/unassign", controllers.UnAssignProgram).Methods("POST")
+
+	// TODO:
+	// get a users program (specifc user only)
+	// get specific parts of a program (specific user only) Ex week, day, exercise
+	// leave a comment about a day
+	// input data about what the user completed
+
+	//old dead code
+	//router.HandleFunc("/api/users/workouts", controllers.GetWorkouts).Methods("GET")
+	//router.HandleFunc("/api/users/workouts/{workoutId}", controllers.DeleteWorkoutById).Methods("DELETE")
 
 	router.Use(models.SessionAuthentication) //attach JWT auth middleware
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8000" //localhost
+	var port string
+
+	if len(os.Args) > 1 {
+		port = os.Args[1]
+	} else {
+		port = "8000"
 	}
 
 	fmt.Println("Listening on port: " + port)
@@ -45,4 +74,6 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
+
+	defer models.GetDB()
 }

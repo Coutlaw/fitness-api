@@ -1,30 +1,27 @@
 package models
 
 import (
+	"database/sql"
 	u "fitness-api/utils"
-	"github.com/jinzhu/gorm"
+	"strings"
+
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
-	"strings"
 )
 
-/*
-JWT claims struct
-*/
-//a struct to rep user user
+// User struct and all fields
 type User struct {
-	gorm.Model
+	UserId   uint   `json:"user_id"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
-	Workout  uint   `json:"workout_id"`
+	// This is a nullable field
+	Program sql.NullInt64 `json:"program_id"`
 }
 
-// `Token` belongs to `User`, `UserID` is the foreign key
+// Token belongs to `User`, `UserID` is the foreign key
 type Token struct {
-	gorm.Model
-	User User
-	UserId uint
+	UserId    uint
 	SessionTK string
 }
 
@@ -41,21 +38,48 @@ func (user *User) Validate() (map[string]interface{}, bool) {
 		return u.Message(false, "Password is required"), false
 	}
 
-	//Email must be unique
-	temp := &User{}
+	var email string
 
 	//check for errors and duplicate emails
-	err := GetDB().Table("users").Where("email = ?", user.Email).First(temp).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
+	err := db.QueryRow("Select email FROM users WHERE email=$1", user.Email).Scan(&email)
+	if err != nil && err != sql.ErrNoRows {
 		return u.Message(false, "Connection error. Please retry"), false
 	}
-	if temp.Email != "" {
+
+	if email == user.Email {
 		return u.Message(false, "Email address already in use by another user."), false
 	}
 
 	return u.Message(false, "Requirement passed"), true
 }
 
+// ValidateUserUpdate user updates
+func (user *User) ValidateUserUpdate() (map[string]interface{}, bool) {
+
+	if !strings.Contains(user.Email, "@") && user.Email != "" {
+		return u.Message(false, "Email address is not valid"), false
+	}
+
+	if len(user.Password) < 6 && user.Password != "" {
+		return u.Message(false, "Password is required"), false
+	}
+
+	var email string
+
+	//check for errors and duplicate emails
+	err := db.QueryRow("Select email FROM users WHERE email=$1", user.Email).Scan(&email)
+	if err != nil && err != sql.ErrNoRows {
+		return u.Message(false, "Connection error. Please retry"), false
+	}
+
+	if email == user.Email {
+		return u.Message(false, "Email address already in use by another user."), false
+	}
+
+	return u.Message(false, "Requirement passed"), true
+}
+
+// Create : creates a user
 func (user *User) Create() (map[string]interface{}, string) {
 
 	if resp, ok := user.Validate(); !ok {
@@ -65,39 +89,36 @@ func (user *User) Create() (map[string]interface{}, string) {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	user.Password = string(hashedPassword)
 
-	//// Prevent anyone but users from being created
-	//user.Role = "user"
+	// Prevent anyone but users from being created
+	user.Role = "user"
 
-	GetDB().Create(user)
+	err := db.QueryRow("INSERT into users (email, password, role) VALUES ($1, $2, $3) RETURNING user_id", user.Email, user.Password, user.Role).Scan(&user.UserId)
 
-	if user.ID <= 0 {
+	if user.UserId <= 0 || err != nil {
 		return u.Message(false, "Failed to create user, connection error."), ""
 	}
 
 	user.Password = "" //delete password
 
 	// Create a new random session token
-	sessionToken:= uuid.NewV4().String()
+	// TODO: update session generation
+	sessionToken := uuid.NewV4().String()
 
-	tk := &Token{
-		User: *user,
-		UserId: user.ID,
-		SessionTK: sessionToken,
-	}
-
-	GetDB().Create(tk)
+	_, err = db.Query("INSERT into tokens (session_tk, user_id) VALUES ($1, $2)", sessionToken, user.UserId)
 
 	response := u.Message(true, "user has been created")
 	response["user"] = user
 	return response, sessionToken
 }
 
+// Login : logs a ueser in, updates their session token
 func Login(email, password string) (map[string]interface{}, string) {
 
-	user := &User{}
-	err := GetDB().Table("users").Where("email = ?", email).First(user).Error
+	user := User{}
+	err := db.QueryRow("SELECT * from users WHERE email=$1", email).Scan(&user.UserId, &user.Email, &user.Password, &user.Role, &user.Program)
+
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if err == sql.ErrNoRows {
 			return u.Message(false, "Email address not found"), ""
 		}
 		return u.Message(false, "Connection error. Please retry"), ""
@@ -111,21 +132,39 @@ func Login(email, password string) (map[string]interface{}, string) {
 	user.Password = ""
 
 	// Create a new random session token
-	sessionToken:= uuid.NewV4().String()
+	// TODO: update session generation
+	sessionToken := uuid.NewV4().String()
 
-	tk := &Token{
-		User: *user,
-		UserId: user.ID,
-		SessionTK: sessionToken,
-	}
-
-	err = GetDB().Table("tokens").Where("user_id = ?", user.ID).Update("session_tk", sessionToken).Error
-	if err != nil {
-		GetDB().Create(tk)
-	}
+	_, err = db.Query("UPDATE tokens SET session_tk=$1 WHERE user_id=$2", sessionToken, user.UserId)
 
 	resp := u.Message(true, "Logged In")
 	resp["user"] = user
 
 	return resp, sessionToken
+}
+
+// Update : Updates a user
+func (user *User) Update() map[string]interface{} {
+
+	if resp, ok := user.ValidateUserUpdate(); !ok {
+		return resp
+	}
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	user.Password = string(hashedPassword)
+
+	// Prevent anyone but users from being created
+	user.Role = "user"
+
+	err := db.QueryRow("INSERT into users (email, password, role) VALUES ($1, $2, $3) RETURNING user_id", user.Email, user.Password, user.Role).Scan(&user.UserId)
+
+	if user.UserId <= 0 || err != nil {
+		return u.Message(false, "Failed to create user, connection error.")
+	}
+
+	user.Password = "" //delete password
+
+	response := u.Message(true, "user has been created")
+	response["user"] = user
+	return response
 }

@@ -1,1 +1,7 @@
-.idea/
+.idea
+*.exe
+*.exe~
+*.orig
+.*.swp
+.DS_Store
+/build/
