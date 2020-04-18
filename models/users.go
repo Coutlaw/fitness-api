@@ -9,10 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-/*
-JWT claims struct
-*/
-//a struct to rep user user
+// User struct and all fields
 type User struct {
 	UserId   uint   `json:"user_id"`
 	Email    string `json:"email"`
@@ -22,7 +19,7 @@ type User struct {
 	Program sql.NullInt64 `json:"program_id"`
 }
 
-// `Token` belongs to `User`, `UserID` is the foreign key
+// Token belongs to `User`, `UserID` is the foreign key
 type Token struct {
 	UserId    uint
 	SessionTK string
@@ -56,6 +53,33 @@ func (user *User) Validate() (map[string]interface{}, bool) {
 	return u.Message(false, "Requirement passed"), true
 }
 
+// ValidateUserUpdate user updates
+func (user *User) ValidateUserUpdate() (map[string]interface{}, bool) {
+
+	if !strings.Contains(user.Email, "@") && user.Email != "" {
+		return u.Message(false, "Email address is not valid"), false
+	}
+
+	if len(user.Password) < 6 && user.Password != "" {
+		return u.Message(false, "Password is required"), false
+	}
+
+	var email string
+
+	//check for errors and duplicate emails
+	err := db.QueryRow("Select email FROM users WHERE email=$1", user.Email).Scan(&email)
+	if err != nil && err != sql.ErrNoRows {
+		return u.Message(false, "Connection error. Please retry"), false
+	}
+
+	if email == user.Email {
+		return u.Message(false, "Email address already in use by another user."), false
+	}
+
+	return u.Message(false, "Requirement passed"), true
+}
+
+// Create : creates a user
 func (user *User) Create() (map[string]interface{}, string) {
 
 	if resp, ok := user.Validate(); !ok {
@@ -65,7 +89,7 @@ func (user *User) Create() (map[string]interface{}, string) {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	user.Password = string(hashedPassword)
 
-	//// Prevent anyone but users from being created
+	// Prevent anyone but users from being created
 	user.Role = "user"
 
 	err := db.QueryRow("INSERT into users (email, password, role) VALUES ($1, $2, $3) RETURNING user_id", user.Email, user.Password, user.Role).Scan(&user.UserId)
@@ -77,6 +101,7 @@ func (user *User) Create() (map[string]interface{}, string) {
 	user.Password = "" //delete password
 
 	// Create a new random session token
+	// TODO: update session generation
 	sessionToken := uuid.NewV4().String()
 
 	_, err = db.Query("INSERT into tokens (session_tk, user_id) VALUES ($1, $2)", sessionToken, user.UserId)
@@ -86,6 +111,7 @@ func (user *User) Create() (map[string]interface{}, string) {
 	return response, sessionToken
 }
 
+// Login : logs a ueser in, updates their session token
 func Login(email, password string) (map[string]interface{}, string) {
 
 	user := User{}
@@ -106,6 +132,7 @@ func Login(email, password string) (map[string]interface{}, string) {
 	user.Password = ""
 
 	// Create a new random session token
+	// TODO: update session generation
 	sessionToken := uuid.NewV4().String()
 
 	_, err = db.Query("UPDATE tokens SET session_tk=$1 WHERE user_id=$2", sessionToken, user.UserId)
@@ -114,4 +141,30 @@ func Login(email, password string) (map[string]interface{}, string) {
 	resp["user"] = user
 
 	return resp, sessionToken
+}
+
+// Update : Updates a user
+func (user *User) Update() map[string]interface{} {
+
+	if resp, ok := user.ValidateUserUpdate(); !ok {
+		return resp
+	}
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	user.Password = string(hashedPassword)
+
+	// Prevent anyone but users from being created
+	user.Role = "user"
+
+	err := db.QueryRow("INSERT into users (email, password, role) VALUES ($1, $2, $3) RETURNING user_id", user.Email, user.Password, user.Role).Scan(&user.UserId)
+
+	if user.UserId <= 0 || err != nil {
+		return u.Message(false, "Failed to create user, connection error.")
+	}
+
+	user.Password = "" //delete password
+
+	response := u.Message(true, "user has been created")
+	response["user"] = user
+	return response
 }

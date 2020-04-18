@@ -17,13 +17,16 @@ func main() {
 
 	// USER ROUTES
 	// Create a user (gets a jwt)
-	router.HandleFunc("/users/new", controllers.CreateAccount).Methods("POST")
+	router.HandleFunc("/users/new", controllers.CreateUser).Methods("POST")
 
 	// Get a new JWT if users is expired
 	router.HandleFunc("/users/login", controllers.Authenticate).Methods("POST")
 
+	// update a users info (only specific user)
+	router.HandleFunc("/users", controllers.UpdateUser).Methods("PUT")
+
 	// TODO:
-	// update a users info
+
 	// set a users account status {paid, behind, paused, cancelled}
 	// delete a user
 
