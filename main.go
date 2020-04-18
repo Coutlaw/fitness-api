@@ -60,17 +60,15 @@ func main() {
 
 	router.Use(models.SessionAuthentication) //attach JWT auth middleware
 
-	var port string
+	port := os.Getenv("PORT")
 
-	if len(os.Args) > 1 {
-		port = os.Args[1]
-	} else {
+	if port == "" {
 		port = "8000"
 	}
 
 	fmt.Println("Listening on port: " + port)
 
-	err := http.ListenAndServe(":"+port, router) //Launch the app, visit localhost:8000/api
+	err := http.ListenAndServe(":"+port, router) //Launch the app
 	if err != nil {
 		fmt.Print(err)
 	}
