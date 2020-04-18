@@ -3,9 +3,10 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"os"
+
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"os"
 )
 
 var db *sql.DB
@@ -38,6 +39,6 @@ func init() {
 	db = conn
 }
 
-func GetDB() *sql.DB{
+func GetDB() *sql.DB {
 	return db
 }
