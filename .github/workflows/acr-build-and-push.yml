@@ -24,6 +24,6 @@ jobs:
           docker push ${{ secrets.REGISTRY_NAME }}.azurecr.io/${{ secrets.REGISTRY_PATH }}:${{ github.event.release.tag_name }}
           
       - name: logout-acr
-        uses: azure/docker-logout@v1
+        uses: azure/container-actions/docker-logout@master
         id: logout-acr
 
