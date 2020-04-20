@@ -12,18 +12,18 @@ jobs:
     steps:
       - name: Login to ACR
         id: login-acr
-      - uses: azure/container-actions/docker-login@master
+        uses: azure/container-actions/docker-login@master
         with:
           login-server: ${{ secrets.REGISTRY_NAME }}.azurecr.io
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       
       - name: build, tag, push to ACR
-      - run: |
+        run: |
           docker build . -t ${{ secrets.REGISTRY_NAME }}.azurecr.io/${{ secrets.REGISTRY_PATH }}:${{ github.event.release.tag_name }}
           docker push ${{ secrets.REGISTRY_NAME }}.azurecr.io/${{ secrets.REGISTRY_PATH }}:${{ github.event.release.tag_name }}
           
       - name: logout-acr
-      - uses: azure/container-actions/docker-logout@master
+        uses: azure/container-actions/docker-logout@master
         id: logout-acr
 
