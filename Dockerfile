@@ -27,7 +27,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN go build -o main .
+RUN go build -o .
 
 # Start a new stage from scratch
 FROM alpine:latest
@@ -36,11 +36,11 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage. Observe we also copied the .env file
-COPY --from=builder /build/main .
+COPY --from=builder /build/fitness-api .
 COPY --from=builder /build/.env .       
 
 # Expose port 8080 to the outside world
 EXPOSE 8000
 
 #Command to run the executable
-CMD ["./main"]
+CMD ["./fitness-api"]
