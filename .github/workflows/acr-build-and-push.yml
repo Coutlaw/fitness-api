@@ -10,6 +10,8 @@ jobs:
     name: Build and Deploy to ACR
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      
       - name: Login to ACR
         id: login-acr
         uses: azure/docker-login@v1
