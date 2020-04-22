@@ -20,9 +20,11 @@ func init() {
 	dbHost := os.Getenv("DB_HOST")
 
 	if username == "" || password == "" || dbName == "" || dbHost == "" {
+		fmt.Println("No environment overides provided, defaulting to .env configurations")
 		e := godotenv.Load()
 		if e != nil {
-			fmt.Print(e)
+			fmt.Println("Unable to load .env configuration")
+			panic(e)
 		}
 
 		username = os.Getenv("TEST_DB_USER")
