@@ -18,10 +18,6 @@ func init() {
 	password := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
 	dbHost := os.Getenv("DB_HOST")
-	fmt.Println(username)
-	fmt.Println(password)
-	fmt.Println(dbName)
-	fmt.Println(dbHost)
 
 	if username == "" || password == "" || dbName == "" || dbHost == "" {
 		e := godotenv.Load()
