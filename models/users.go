@@ -41,7 +41,7 @@ func (user *User) Validate() (map[string]interface{}, bool) {
 	var email string
 
 	//check for errors and duplicate emails
-	err := db.QueryRow("Select email FROM users WHERE email=$1", user.Email).Scan(&email)
+	err := db.QueryRow("Select email FROM fitness.users WHERE email=$1", user.Email).Scan(&email)
 	if err != nil && err != sql.ErrNoRows {
 		return u.Message(false, "Connection error. Please retry"), false
 	}
@@ -67,7 +67,7 @@ func (user *User) ValidateUserUpdate() (map[string]interface{}, bool) {
 	var email string
 
 	//check for errors and duplicate emails
-	err := db.QueryRow("Select email FROM users WHERE email=$1", user.Email).Scan(&email)
+	err := db.QueryRow("Select email FROM fitness.users WHERE email=$1", user.Email).Scan(&email)
 	if err != nil && err != sql.ErrNoRows {
 		return u.Message(false, "Connection error. Please retry"), false
 	}
@@ -92,7 +92,7 @@ func (user *User) Create() (map[string]interface{}, string) {
 	// Prevent anyone but users from being created
 	user.Role = "user"
 
-	err := db.QueryRow("INSERT into users (email, password, role) VALUES ($1, $2, $3) RETURNING user_id", user.Email, user.Password, user.Role).Scan(&user.UserId)
+	err := db.QueryRow("INSERT into fitness.users (email, password, role) VALUES ($1, $2, $3) RETURNING user_id", user.Email, user.Password, user.Role).Scan(&user.UserId)
 
 	if user.UserId <= 0 || err != nil {
 		return u.Message(false, "Failed to create user, connection error."), ""
@@ -104,7 +104,7 @@ func (user *User) Create() (map[string]interface{}, string) {
 	// TODO: update session generation
 	sessionToken := uuid.NewV4().String()
 
-	_, err = db.Query("INSERT into tokens (session_tk, user_id) VALUES ($1, $2)", sessionToken, user.UserId)
+	_, err = db.Query("INSERT into fitness.tokens (session_tk, user_id) VALUES ($1, $2)", sessionToken, user.UserId)
 
 	response := u.Message(true, "user has been created")
 	response["user"] = user
@@ -115,7 +115,7 @@ func (user *User) Create() (map[string]interface{}, string) {
 func Login(email, password string) (map[string]interface{}, string) {
 
 	user := User{}
-	err := db.QueryRow("SELECT * from users WHERE email=$1", email).Scan(&user.UserId, &user.Email, &user.Password, &user.Role, &user.Program)
+	err := db.QueryRow("SELECT * from fitness.users WHERE email=$1", email).Scan(&user.UserId, &user.Email, &user.Password, &user.Role, &user.Program)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -135,7 +135,7 @@ func Login(email, password string) (map[string]interface{}, string) {
 	// TODO: update session generation
 	sessionToken := uuid.NewV4().String()
 
-	_, err = db.Query("UPDATE tokens SET session_tk=$1 WHERE user_id=$2", sessionToken, user.UserId)
+	_, err = db.Query("UPDATE fitness.tokens SET session_tk=$1 WHERE user_id=$2", sessionToken, user.UserId)
 
 	resp := u.Message(true, "Logged In")
 	resp["user"] = user
@@ -156,7 +156,7 @@ func (user *User) Update() map[string]interface{} {
 	// Prevent anyone but users from being created
 	user.Role = "user"
 
-	err := db.QueryRow("INSERT into users (email, password, role) VALUES ($1, $2, $3) RETURNING user_id", user.Email, user.Password, user.Role).Scan(&user.UserId)
+	err := db.QueryRow("INSERT into fitness.users (email, password, role) VALUES ($1, $2, $3) RETURNING user_id", user.Email, user.Password, user.Role).Scan(&user.UserId)
 
 	if user.UserId <= 0 || err != nil {
 		return u.Message(false, "Failed to create user, connection error.")

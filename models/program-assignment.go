@@ -37,7 +37,7 @@ func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{
 	baseProgram := Program{}
 
 	err := db.
-		QueryRow("SELECT base_program_id, program_name, program_creator, number_of_weeks, program_data from base_programs WHERE base_program_id=$1",
+		QueryRow("SELECT base_program_id, program_name, program_creator, number_of_weeks, program_data FROM fitness.base_programs WHERE base_program_id=$1",
 			programAss.ProgramID).
 		Scan(&baseProgram.ProgramID, &baseProgram.ProgramName, &baseProgram.ProgramCreator, &baseProgram.NumWeeks, &baseProgram.ProgramData)
 
@@ -48,7 +48,7 @@ func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{
 	// store the program in the programs table (to allow specific changes and comments from the user)
 	err = db.
 		QueryRow(
-			"INSERT into programs (program_name, program_creator, number_of_weeks, program_data, base_program) VALUES ($1, $2, $3, $4, $5) RETURNING program_id",
+			"INSERT into fitness.programs (program_name, program_creator, number_of_weeks, program_data, base_program) VALUES ($1, $2, $3, $4, $5) RETURNING program_id",
 			baseProgram.ProgramName,
 			programAss.UserID,
 			baseProgram.NumWeeks,
@@ -61,7 +61,7 @@ func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{
 	}
 
 	// assign the program to the user
-	_, err = db.Query("UPDATE users SET program=$1 WHERE user_id=$2", programAss.ProgramID, programAss.UserID)
+	_, err = db.Query("UPDATE fitness.users SET program=$1 WHERE user_id=$2", programAss.ProgramID, programAss.UserID)
 
 	if err != nil {
 		fmt.Println("err: ", err)
@@ -77,9 +77,9 @@ func (programAss *ProgramAssignment) AssignProgramToUser() map[string]interface{
 func UnAssignProgramToUser(userID uint) map[string]interface{} {
 
 	// query to update the users table, returning the old program_id
-	updateReturningOriginalQuery := ` UPDATE users x
+	updateReturningOriginalQuery := ` UPDATE fitness.users x
 																		SET    program = null
-																		FROM  (SELECT * FROM users WHERE user_id = $1 FOR UPDATE) y
+																		FROM  (SELECT * FROM fitness.users WHERE user_id = $1 FOR UPDATE) y
 																		WHERE  x.user_id = y.user_id
 																		RETURNING y.program`
 	var originalProgramID uint
@@ -89,7 +89,7 @@ func UnAssignProgramToUser(userID uint) map[string]interface{} {
 	// delete the program from the program table
 	_, err = db.
 		Exec(
-			"DELETE from programs where program_id=$1", originalProgramID)
+			"DELETE from fitness.programs where program_id=$1", originalProgramID)
 
 	if err != nil {
 		return u.Message(false, "Error, unable to un assign program")

@@ -27,10 +27,10 @@ func init() {
 			panic(e)
 		}
 
-		username = os.Getenv("TEST_DB_USER")
-		password = os.Getenv("TEST_DB_PASSWORD")
-		dbName = os.Getenv("TEST_DB_NAME")
-		dbHost = os.Getenv("TEST_DB_HOST")
+		username = os.Getenv("DB_USER")
+		password = os.Getenv("DB_PASSWORD")
+		dbName = os.Getenv("DB_NAME")
+		dbHost = os.Getenv("DB_HOST")
 	}
 
 	dbURI := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)

@@ -22,6 +22,7 @@ var CreateUser = func(w http.ResponseWriter, r *http.Request) {
 
 	// Cache that cookie son
 	http.SetCookie(w, &http.Cookie{
+		Path:    "/api",
 		Name:    "session_token",
 		Value:   sessionToken,
 		Expires: time.Now().Add(120 * time.Second),
@@ -44,6 +45,7 @@ var Authenticate = func(w http.ResponseWriter, r *http.Request) {
 
 	// Cache that cookie son
 	http.SetCookie(w, &http.Cookie{
+		Path:    "/api",
 		Name:    "session_token",
 		Value:   sessionToken,
 		Expires: time.Now().Add(120 * time.Second),

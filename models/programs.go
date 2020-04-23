@@ -76,7 +76,7 @@ func (program *Program) Create(userID uint) map[string]interface{} {
 	// Using QueryRow over exec because I need the id that the DB generated
 	err := db.
 		QueryRow(
-			"INSERT into base_programs (program_name, program_creator, number_of_weeks, program_data) VALUES ($1, $2, $3, $4) RETURNING base_program_id",
+			"INSERT into fitness.base_programs (program_name, program_creator, number_of_weeks, program_data) VALUES ($1, $2, $3, $4) RETURNING base_program_id",
 			program.ProgramName,
 			userID,
 			program.NumWeeks,
@@ -97,7 +97,7 @@ func GetProgramByID(programID uint) map[string]interface{} {
 
 	program := Program{}
 
-	err := db.QueryRow("SELECT * from base_programs WHERE base_program_id=$1", programID).
+	err := db.QueryRow("SELECT * from fitness.base_programs WHERE base_program_id=$1", programID).
 		Scan(&program.ProgramID, &program.ProgramName, &program.ProgramCreator, &program.NumWeeks, &program.ProgramData)
 
 	if err != nil {

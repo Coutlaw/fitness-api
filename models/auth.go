@@ -43,7 +43,7 @@ var SessionAuthentication = func(next http.Handler) http.Handler {
 		tk := TkRole{}
 		// search for the token in the DB
 		err = db.
-			QueryRow("SELECT session_tk, role, tokens.user_id FROM tokens JOIN users ON tokens.user_id = users.user_id WHERE session_tk=$1", sessionToken.Value).
+			QueryRow("SELECT session_tk, role, tokens.user_id FROM fitness.tokens JOIN fitness.users ON tokens.user_id = fitness.users.user_id WHERE session_tk=$1", sessionToken.Value).
 			Scan(&tk.SessionTK, &tk.Role, &tk.UserId)
 
 		if err != nil {
