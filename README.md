@@ -6,7 +6,8 @@ This is Rest API with that has Jwt authentication for users, and can assign work
 
 # Docs
 Some API docs are hosted in github pages, but they need some love [here](https://coutlaw.github.io/fitness-api-docs/)
-For details check out the wiki [here](https://github.com/Coutlaw/fitness-api/wiki)
+
+For other details check out the wiki [here](https://github.com/Coutlaw/fitness-api/wiki)
 
 # Hosting
 This project is set up with GitHub Actions to automatically deploy to Microsoft Azure as a new docker image any time a new release version is made in Github.
